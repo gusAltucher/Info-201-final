@@ -4,7 +4,9 @@ output: html_document
 date: "2023-11-30"
 ---
 
+```{r}
 cat(hi)
+```
 
 
 testing 2 
