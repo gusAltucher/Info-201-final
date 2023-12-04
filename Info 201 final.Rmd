@@ -3,6 +3,16 @@ title: "Info 201 final"
 output: html_document
 date: "2023-11-30"
 ---
+## Intro
+  Often, it is thought that the higher income an area is, the safer it will be. One would think that people in richer neighborhoods will have less reason to steal beause they don't need to turn to crime in order to live. They may be better educated and better connected, and thus have an easier time finding a job or getting loans if something in their life goes desperately awry. Of course, it could also be the case that people living in more impoverished areas choose to commit crimes in richer areas because it is potentially more profitable, although also likely more dangerous.
+
+In this project, we use r to see how true this is in the Seattle area. By cross-referencing Seattle Police Department official crime record data dating back to 2008, combined with public median income data, we can determine if there is truly a correlation between the median income of a neighborhood (or in our case a zip code), and its crime rate. Our hypothesis is that there will be only a faint negative trend to the data, meaning that as median income of a zip code increases, crime rate at that same zip code decreases.
+
+The Seattle Police Department data will be narrowed down to only include robbery, larceny-theft, and motor vehicle theft. We chose to exclude crimes such as embezzlement and fraud offenses because these have no relevance on the safety of a neighborhood. It is more of a problem for individuals if their neighbor has their car stolen than it is if their neighbor is illegally funneling money away from the company they work at. The target audience of this report is individuals considering a move to Seattle or other metropolitan areas. It is important for people to know how the median income of the area they move to will correlate to crime rate when considering where to live. 
+
+There are three possible cases for the data. Either our hypothesis is correct and median income of a zip code does play a role in crime rate (negative correlation), there is no correlation found between median income and crime rate, or there is a positive correlation between median income and crime rate, meaning that higher income areas are more frequented by criminal activity.
+
+
 
 ```{r}
 #Reading the data tables and formatting them conveniently
