@@ -1,0 +1,95 @@
+---
+title: "Info 201 final"
+output: html_document
+date: "2023-11-30"
+---
+
+```{r}
+#Reading the data tables and formatting them conveniently
+
+library(tidyverse)
+zipIncome <- read_delim("../Info 201 final/Seattle_zipcode_income.csv",show_col_types = FALSE) %>% 
+  filter(!is.na(sector))
+
+zipIncome <- zipIncome %>%
+  rename(Zipcode = zipcode)
+
+zipIncome <- zipIncome %>%
+  rename(Sector = sector)
+
+zipIncome <- zipIncome %>%
+  mutate(Sector = toupper(Sector))
+
+zipIncome <- zipIncome %>%
+  mutate(Median.income = as.numeric(str_remove_all(median.income, "[\\$,]")))
+
+zipIncome <- subset(zipIncome, select = -c(median.income))
+
+spdCrimeRate <- read_delim("../Info 201 final/SPD_Crime_Data__2008-Present.csv",show_col_types = FALSE)
+
+names(spdCrimeRate)<-str_replace_all(names(spdCrimeRate), c(" " = "." , "," = "" ))
+```
+
+```{r}
+#Specifying the types of crime we want to cover (can be changed easily)
+
+spdCrimeRate <- spdCrimeRate %>% 
+  filter(Offense.Parent.Group==c("ROBBERY","LARCENY-THEFT","MOTOR VEHICLE THEFT")) %>% 
+  select(Offense.Parent.Group,Sector)
+spdCrimeRate
+```
+
+```{r}
+#Joining the two frames by sector
+
+fullData <- right_join(spdCrimeRate,zipIncome, by = "Sector")
+fullData
+```
+
+```{r}
+#Creating a data frame of frequency of crimes for each zip code, and including median income
+
+crimeFreq <- as.data.frame(table(fullData[["Zipcode"]]))
+
+colnames(crimeFreq) <- c("Zipcode", "Criminal.instances")
+
+crimeFreq$Zipcode <- as.numeric(as.character(crimeFreq$Zipcode))
+
+fullCrimeFreq <- full_join(crimeFreq,zipIncome,by="Zipcode") %>% 
+  select(!Sector)
+fullCrimeFreq
+```
+
+
+
+
+```{r}
+#First set of charts
+
+#Counting crime instances at each zip code (messy)
+fullData %>% 
+  ggplot(aes(factor(Zipcode),Median.income))+
+  geom_col()
+
+#Median income of each zip code (also messy)
+fullData %>% 
+  group_by(Zipcode) %>% 
+  summarize(Income=mean(Median.income)) %>% 
+  ggplot(aes(Zipcode,Income))+
+  geom_col()
+
+fullCrimeFreq %>% 
+  ggplot(aes(Median.income,Criminal.instances))+
+  geom_point()
+```
+
+
+
+
+
+
+
+
+
+
+
