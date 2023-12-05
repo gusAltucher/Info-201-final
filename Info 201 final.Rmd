@@ -3,7 +3,7 @@ title: "Info 201 final"
 output: rmarkdown::github_document
 date: "2023-11-30"
 ---
-## Introduction 
+## Intro
   Often, it is thought that the higher income an area is, the safer it will be. One would think that people in richer neighborhoods will have less reason to steal beause they don't need to turn to crime in order to live. They may be better educated and better connected, and thus have an easier time finding a job or getting loans if something in their life goes desperately awry. Of course, it could also be the case that people living in more impoverished areas choose to commit crimes in richer areas because it is potentially more profitable, although also likely more dangerous.
 
 In this project, we use r to see how true this is in the Seattle area. By cross-referencing Seattle Police Department official crime record data dating back to 2008, combined with public median income data, we can determine if there is truly a correlation between the median income of a neighborhood (or in our case a zip code), and its crime rate. Our hypothesis is that there will be only a faint negative trend to the data, meaning that as median income of a zip code increases, crime rate at that same zip code decreases.
@@ -12,7 +12,11 @@ The Seattle Police Department data will be narrowed down to only include robbery
 
 There are three possible cases for the data. Either our hypothesis is correct and median income of a zip code does play a role in crime rate (negative correlation), there is no correlation found between median income and crime rate, or there is a positive correlation between median income and crime rate, meaning that higher income areas are more frequented by criminal activity.
 
-
+```{r setup, include=FALSE}
+#Change echo to change how code is displayed (I think)
+knitr::opts_chunk$set(echo = FALSE, message = FALSE,
+                  	warning = FALSE)
+```
 
 ```{r}
 #Reading the data tables and formatting them conveniently
@@ -68,29 +72,49 @@ crimeFreq$Zipcode <- as.numeric(as.character(crimeFreq$Zipcode))
 fullCrimeFreq <- full_join(crimeFreq,zipIncome,by="Zipcode") %>% 
   select(!Sector)
 fullCrimeFreq
+
+
 ```
 
-
-
-
 ```{r}
+library(viridis)
 #First set of charts
 
-#Counting crime instances at each zip code (messy)
-fullData %>% 
-  ggplot(aes(factor(Zipcode),Median.income))+
-  geom_col()
+#Counting crime instances at each zip code
+fullCrimeFreq %>% 
+  mutate(sZipcode=str_replace_all(Zipcode,"981",":")) %>% 
+  ggplot(aes(factor(sZipcode),Criminal.instances,fill=Criminal.instances))+
+  geom_col()+
+  scale_fill_viridis(option = "inferno")+
+      labs(
+    x= "Zip Code (Written As Last Two Digits)",
+    y="Instances of Criminal Activity",
+    fill = "Criminal Activity",
+    title= "Instances of Criminal Activity in Each Zip Code"
+  )
 
-#Median income of each zip code (also messy)
+#Median income of each zip code
 fullData %>% 
-  group_by(Zipcode) %>% 
+  mutate(sZipcode=str_replace_all(Zipcode,"981",":")) %>% 
+  group_by(sZipcode) %>% 
   summarize(Income=mean(Median.income)) %>% 
-  ggplot(aes(Zipcode,Income))+
-  geom_col()
+  ggplot(aes(factor(sZipcode),Income,fill=Income))+
+  geom_col()+
+        labs(
+    x= "Zip Code (Written As Last Two Digits)",
+    title= "Median Income in Each Zip Code"
+  )
 
 fullCrimeFreq %>% 
-  ggplot(aes(Median.income,Criminal.instances))+
-  geom_point()
+  ggplot(aes(Median.income,Criminal.instances,col=Criminal.instances))+
+  geom_point()+
+  geom_smooth(method="lm",se=FALSE,col="azure4")+
+  scale_color_viridis(option = "inferno")+
+  labs(
+    x="Median Income",
+    y="Instances of Criminal Activity",
+    title="Insances of Criminal Activity Compared to Median Income"
+  )
 ```
 
 
