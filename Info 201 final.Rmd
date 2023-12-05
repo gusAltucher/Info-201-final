@@ -78,18 +78,18 @@ fullCrimeFreq
 
 ```{r}
 library(viridis)
-#First set of charts
+library(RColorBrewer)
+#Charts
 
 #Counting crime instances at each zip code
 fullCrimeFreq %>% 
   mutate(sZipcode=str_replace_all(Zipcode,"981",":")) %>% 
   ggplot(aes(factor(sZipcode),Criminal.instances,fill=Criminal.instances))+
   geom_col()+
-  scale_fill_viridis(option = "inferno")+
+  scale_fill_viridis(option="inferno",direction=-1)+
       labs(
     x= "Zip Code (Written As Last Two Digits)",
     y="Instances of Criminal Activity",
-    fill = "Criminal Activity",
     title= "Instances of Criminal Activity in Each Zip Code"
   )
 
@@ -103,18 +103,21 @@ fullData %>%
         labs(
     x= "Zip Code (Written As Last Two Digits)",
     title= "Median Income in Each Zip Code"
-  )
+)
 
 fullCrimeFreq %>% 
   ggplot(aes(Median.income,Criminal.instances,col=Criminal.instances))+
   geom_point()+
   geom_smooth(method="lm",se=FALSE,col="azure4")+
-  scale_color_viridis(option = "inferno")+
+  scale_color_viridis(option="inferno",direction=-1)+
   labs(
     x="Median Income",
     y="Instances of Criminal Activity",
     title="Insances of Criminal Activity Compared to Median Income"
-  )
+  )+
+    guides(col="none")+
+    geom_point(size=2)
+
 ```
 
 
