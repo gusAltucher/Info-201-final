@@ -3,7 +3,7 @@ title: "Info 201 final"
 output: rmarkdown::github_document
 date: "2023-11-30"
 ---
-## Intro
+## Introduction 
   Often, it is thought that the higher income an area is, the safer it will be. One would think that people in richer neighborhoods will have less reason to steal beause they don't need to turn to crime in order to live. They may be better educated and better connected, and thus have an easier time finding a job or getting loans if something in their life goes desperately awry. Of course, it could also be the case that people living in more impoverished areas choose to commit crimes in richer areas because it is potentially more profitable, although also likely more dangerous.
 
 In this project, we use r to see how true this is in the Seattle area. By cross-referencing Seattle Police Department official crime record data dating back to 2008, combined with public median income data, we can determine if there is truly a correlation between the median income of a neighborhood (or in our case a zip code), and its crime rate. Our hypothesis is that there will be only a faint negative trend to the data, meaning that as median income of a zip code increases, crime rate at that same zip code decreases.
