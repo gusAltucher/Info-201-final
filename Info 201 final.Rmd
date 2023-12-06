@@ -1,10 +1,10 @@
 ---
 title: "Info 201 final"
-output: rmarkdown::github_document
-date: "2023-11-30"
+output: html_document
+date: "2023-12-8"
 ---
 ## Intro
-  Often, it is thought that the higher income an area is, the safer it will be. One would think that people in richer neighborhoods will have less reason to steal beause they don't need to turn to crime in order to live. They may be better educated and better connected, and thus have an easier time finding a job or getting loans if something in their life goes desperately awry. Of course, it could also be the case that people living in more impoverished areas choose to commit crimes in richer areas because it is potentially more profitable, although also likely more dangerous.
+  Often, it is thought that the higher income an area is, the safer it will be. One would think that people in richer neighborhoods will have less reason to steal because they don't need to turn to crime in order to live. They may be better educated and better connected, and thus have an easier time finding a job or getting loans if something in their life goes desperately awry. Of course, it could also be the case that people living in more impoverished areas choose to commit crimes in richer areas because it is potentially more profitable, although also likely more dangerous.
 
 In this project, we use r to see how true this is in the Seattle area. By cross-referencing Seattle Police Department official crime record data dating back to 2008, combined with public median income data, we can determine if there is truly a correlation between the median income of a neighborhood (or in our case a zip code), and its crime rate. Our hypothesis is that there will be only a faint negative trend to the data, meaning that as median income of a zip code increases, crime rate at that same zip code decreases.
 
@@ -13,15 +13,19 @@ The Seattle Police Department data will be narrowed down to only include robbery
 There are three possible cases for the data. Either our hypothesis is correct and median income of a zip code does play a role in crime rate (negative correlation), there is no correlation found between median income and crime rate, or there is a positive correlation between median income and crime rate, meaning that higher income areas are more frequented by criminal activity.
 
 ```{r setup, include=FALSE}
-#Change echo to change how code is displayed (I think)
-knitr::opts_chunk$set(echo = FALSE, message = FALSE,
-                  	warning = FALSE)
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
 ```
 
 ```{r}
 #Reading the data tables and formatting them conveniently
 
 library(tidyverse)
+library(viridis)
+
 zipIncome <- read_delim("../Info 201 final/Seattle_zipcode_income.csv",show_col_types = FALSE) %>% 
   filter(!is.na(sector))
 
@@ -45,23 +49,22 @@ names(spdCrimeRate)<-str_replace_all(names(spdCrimeRate), c(" " = "." , "," = ""
 ```
 
 ```{r}
-#Specifying the types of crime we want to cover (can be changed easily)
+#Specifying the types of crime we want to cover (all)
 
 spdCrimeRate <- spdCrimeRate %>% 
   filter(Offense.Parent.Group==c("ROBBERY","LARCENY-THEFT","MOTOR VEHICLE THEFT")) %>% 
-  select(Offense.Parent.Group,Sector)
-spdCrimeRate
+  select(Offense.Parent.Group,Sector,Offense.Code)
 ```
 
 ```{r}
-#Joining the two frames by sector
+#Joining the two frames by sector (wil be used in the final chart)
 
-fullData <- right_join(spdCrimeRate,zipIncome, by = "Sector")
-fullData
+fullData <- right_join(spdCrimeRate,zipIncome, by = "Sector") %>% 
+  select(!Offense.Code)
 ```
 
 ```{r}
-#Creating a data frame of frequency of crimes for each zip code, and including median income
+#Creating a data frame of frequency of crimes for each zip code, and including median income (will be used in the final chart)
 
 crimeFreq <- as.data.frame(table(fullData[["Zipcode"]]))
 
@@ -71,39 +74,216 @@ crimeFreq$Zipcode <- as.numeric(as.character(crimeFreq$Zipcode))
 
 fullCrimeFreq <- full_join(crimeFreq,zipIncome,by="Zipcode") %>% 
   select(!Sector)
-fullCrimeFreq
+```
+
+## Median Income
+
+```{r}
+#Median income of each zip code
+fullData %>% 
+  group_by(Zipcode) %>% 
+  summarize(Income=mean(Median.income)) %>% 
+  ggplot(aes(factor(Zipcode),Income,fill=Income))+
+  geom_col()+
+        labs(
+    x= "Zip Code",
+    title= "Median Income in Each Zip Code"
+)+
+  theme(axis.text.x = element_text(angle = -45, vjust = .5, hjust=0))
+```
 
 
+## ROBBERY
+
+```{r}
+#Specifying the types of crime we want to cover (robbery)
+
+robberyRate <- spdCrimeRate %>% 
+  filter(Offense.Parent.Group==c("ROBBERY")) %>% 
+  select(Offense.Parent.Group,Sector)
 ```
 
 ```{r}
-library(viridis)
-library(RColorBrewer)
-#Charts
+#Joining the robbery data frame
 
-#Counting crime instances at each zip code
-fullCrimeFreq %>% 
-  mutate(sZipcode=str_replace_all(Zipcode,"981",":")) %>% 
-  ggplot(aes(factor(sZipcode),Criminal.instances,fill=Criminal.instances))+
+fullDataRobbery <- right_join(robberyRate,zipIncome, by = "Sector")
+```
+
+```{r}
+#Creating a data frame of frequency of robbery for each zip code, and including median income
+
+robberyFreq <- as.data.frame(table(fullDataRobbery[["Zipcode"]]))
+
+colnames(robberyFreq) <- c("Zipcode", "Robbery.instances")
+
+robberyFreq$Zipcode <- as.numeric(as.character(robberyFreq$Zipcode))
+
+fullFreqRobbery <- full_join(robberyFreq,zipIncome,by="Zipcode") %>% 
+  select(!Sector)
+```
+
+```{r}
+fullFreqRobbery %>% 
+  ggplot(aes(factor(Zipcode),Robbery.instances,fill=Robbery.instances))+
+  geom_col()+
+  scale_fill_viridis(option="inferno",direction=-1)+
+      labs(
+    x= "Zip Code",
+    y="Instances of Robbery",
+    title= "Instances of Robbery in Each Zip Code",
+    fill="Frequency of \n Robbery"
+  )+
+  theme(axis.text.x = element_text(angle = -45, vjust = .5, hjust=0))
+
+fullFreqRobbery %>% 
+  ggplot(aes(Median.income,Robbery.instances,col=Robbery.instances))+
+  geom_point()+
+  geom_smooth(method="lm",se=FALSE,col="azure4")+
+  scale_color_viridis(option="inferno",direction=-1)+
+  labs(
+    x="Median Income",
+    y="Instances of Robbery",
+    title="Instances of Robbery Compared to Median Income"
+  )+
+    guides(col="none")+
+    geom_point(size=2)
+```
+
+
+## LARCENY-THEFT
+
+```{r}
+#Specifying the types of crime we want to cover (larceny)
+
+larcenyRate <- spdCrimeRate %>% 
+  filter(Offense.Parent.Group==c("LARCENY-THEFT")) %>% 
+  select(Offense.Parent.Group,Sector)
+```
+
+```{r}
+#Joining the larceny data frame
+
+fullDataLarceny <- right_join(larcenyRate,zipIncome, by = "Sector")
+```
+
+```{r}
+#Creating a data frame of frequency of larceny for each zip code, and including median income
+
+larcenyFreq <- as.data.frame(table(fullDataLarceny[["Zipcode"]]))
+
+colnames(larcenyFreq) <- c("Zipcode", "Larceny.instances")
+
+larcenyFreq$Zipcode <- as.numeric(as.character(larcenyFreq$Zipcode))
+
+fullFreqLarceny <- full_join(larcenyFreq,zipIncome,by="Zipcode") %>% 
+  select(!Sector)
+```
+
+```{r}
+fullFreqLarceny %>% 
+  ggplot(aes(factor(Zipcode),Larceny.instances,fill=Larceny.instances))+
   geom_col()+
   scale_fill_viridis(option="inferno",direction=-1)+
       labs(
     x= "Zip Code (Written As Last Two Digits)",
-    y="Instances of Criminal Activity",
-    title= "Instances of Criminal Activity in Each Zip Code"
-  )
+    y="Instances of Larceny",
+    title= "Instances of Larceny in Each Zip Code",
+    fill="Frequency of Larceny"
+  )+
+  theme(axis.text.x = element_text(angle = -45, vjust = .5, hjust=0))
 
-#Median income of each zip code
-fullData %>% 
-  mutate(sZipcode=str_replace_all(Zipcode,"981",":")) %>% 
-  group_by(sZipcode) %>% 
-  summarize(Income=mean(Median.income)) %>% 
-  ggplot(aes(factor(sZipcode),Income,fill=Income))+
+fullFreqLarceny %>% 
+  ggplot(aes(Median.income,Larceny.instances,col=Larceny.instances))+
+  geom_point()+
+  geom_smooth(method="lm",se=FALSE,col="azure4")+
+  scale_color_viridis(option="inferno",direction=-1)+
+  labs(
+    x="Median Income",
+    y="Instances of \n Larceny",
+    title="Instances of Larceny Compared to Median Income"
+  )+
+    guides(col="none")+
+    geom_point(size=2)
+```
+
+
+## MOTOR VEHICLE THEFT
+
+
+```{r}
+#Specifying the types of crime we want to cover (vehicle theft)
+
+vtheftRate <- spdCrimeRate %>% 
+  filter(Offense.Code==c("240")) %>% 
+  select(Offense.Parent.Group,Sector)
+```
+
+```{r}
+#Joining the motor vehicle theft data frame
+
+fullDataVtheft <- right_join(vtheftRate,zipIncome, by = "Sector")
+```
+
+```{r}
+#Creating a data frame of frequency of motor theft for each zip code, and including median income
+
+vtheftFreq <- as.data.frame(table(fullDataVtheft[["Zipcode"]]))
+
+colnames(vtheftFreq) <- c("Zipcode", "Vtheft.instances")
+
+vtheftFreq$Zipcode <- as.numeric(as.character(vtheftFreq$Zipcode))
+
+fullFreqVtheft <- full_join(vtheftFreq,zipIncome,by="Zipcode") %>% 
+  select(!Sector)
+```
+
+```{r}
+fullFreqVtheft %>% 
+  ggplot(aes(factor(Zipcode),Vtheft.instances,fill=Vtheft.instances))+
   geom_col()+
-        labs(
+  scale_fill_viridis(option="inferno",direction=-1)+
+      labs(
     x= "Zip Code (Written As Last Two Digits)",
-    title= "Median Income in Each Zip Code"
-)
+    y="Instances of Vehicular Theft",
+    title= "Instances of Vehicular Theft in Each Zip Code",
+    fill="Frequency of Vehicular Theft"
+  )+
+  theme(axis.text.x = element_text(angle = -45, vjust = .5, hjust=0))
+
+
+fullFreqVtheft %>% 
+  ggplot(aes(Median.income,Vtheft.instances,col=Vtheft.instances))+
+  geom_point()+
+  geom_smooth(method="lm",se=FALSE,col="azure4")+
+  scale_color_viridis(option="inferno",direction=-1)+
+  labs(
+    x="Median Income",
+    y="Instances of \n Vehicular Theft",
+    title="Instances of Vehicular Theft Compared to Median Income"
+  )+
+    guides(col="none")+
+    geom_point(size=2)
+```
+
+
+## COMBINED DATA
+
+
+```{r}
+#Charts
+
+#Counting crime instances at each zip code
+fullCrimeFreq %>% 
+  ggplot(aes(factor(Zipcode),Criminal.instances,fill=Criminal.instances))+
+  geom_col()+
+  scale_fill_viridis(option="inferno",direction=-1)+
+      labs(
+    x= "Zip Code",
+    y="Instances of Overall Criminal Activity",
+    title= "Instances of Overall Criminal Activity in Each Zip Code",
+    fill="Frequency of \n Criminal Activity"
+  )+
+  theme(axis.text.x = element_text(angle = -45, vjust = .5, hjust=0))
 
 fullCrimeFreq %>% 
   ggplot(aes(Median.income,Criminal.instances,col=Criminal.instances))+
@@ -112,21 +292,11 @@ fullCrimeFreq %>%
   scale_color_viridis(option="inferno",direction=-1)+
   labs(
     x="Median Income",
-    y="Instances of Criminal Activity",
-    title="Insances of Criminal Activity Compared to Median Income"
+    y="Instances of Overall Criminal Activity",
+    title="Instances of Overall Criminal Activity Compared to Median Income"
   )+
     guides(col="none")+
     geom_point(size=2)
-
 ```
-
-
-
-
-
-
-
-
-
 
 
