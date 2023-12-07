@@ -163,7 +163,7 @@ fullFreqRobbery %>%
     guides(col="none")+
     geom_point(size=2)
 ```
-As is the case in the combined crimes data, there seems to be a weak positive correlation between median income and instances of robbery. When run excluding the 98164 zip code
+As is the case in the combined crimes data, there seems to be a weak positive correlation between median income and instances of robbery.
 
 ## LARCENY-THEFT
 
@@ -220,7 +220,7 @@ fullFreqLarceny %>%
     guides(col="none")+
     geom_point(size=2)
 ```
-
+Again in the case of larceny-theft there seems to be a positive trend, meaning that higher median incomes generally experience more larceny-theft.
 
 ## MOTOR VEHICLE THEFT
 
@@ -279,7 +279,7 @@ fullFreqVtheft %>%
     guides(col="none")+
     geom_point(size=2)
 ```
-
+Interestingly, there is a negative trend when comparing median income and instances of vehicular theft. This is not enough to make the overall data ttrend negative however.
 
 ## COMBINED DATA
 
@@ -301,7 +301,7 @@ fullCrimeFreq %>%
   theme(axis.text.x = element_text(angle = -45, vjust = .5, hjust=0))
 
 fullCrimeFreq %>% 
-  ggplot(aes(Median.income,Criminal.instances,col=Criminal.instances))+
+  ggplot(aes(Median.income,Criminal.instances))+
   geom_point()+
   geom_smooth(method="lm",se=FALSE,col="azure4")+
   scale_color_viridis(option="inferno",direction=-1)+
@@ -313,6 +313,7 @@ fullCrimeFreq %>%
     guides(col="none")+
     geom_point(size=2)
 ```
+In the final chart, it becomes apparent that median income and overall criminal activity do have a weak positive correlation, meaning that our hypothesis was incorrect.
 
 
 ## Discussion
