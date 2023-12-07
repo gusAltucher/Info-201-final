@@ -1,0 +1,329 @@
+---
+title: "Info 201 final"
+output: html_document
+date: "2023-12-8"
+author: "WenHua Chen, Erhong Gao, Grace Harrill, and August Altucher"
+---
+# Exploring how Median Income Affects Crime Rate in Seattle
+
+## Intro
+  Often, it is thought that the higher income an area is, the safer it will be. One would think that people in richer neighborhoods will have less reason to steal because they don't need to turn to crime in order to live. They may be better educated and better connected, and thus have an easier time finding a job or getting loans if something in their life goes desperately awry. Of course, it could also be the case that people living in more impoverished areas choose to commit crimes in richer areas because it is potentially more profitable, although also likely more dangerous.
+
+In this project, we use r to see how true this is in the Seattle area. By cross-referencing Seattle Police Department official crime record data dating back to 2008, combined with public median income data, we can determine if there is truly a correlation between the median income of a neighborhood (or in our case a zip code), and its crime rate. Our hypothesis is that there will be only a faint negative trend to the data, meaning that as median income of a zip code increases, crime rate at that same zip code decreases.
+
+The Seattle Police Department data will be narrowed down to only include robbery, larceny-theft, and motor vehicle theft. We chose to exclude crimes such as embezzlement and fraud offenses because these have no relevance on the safety of a neighborhood. It is more of a problem for individuals if their neighbor has their car stolen than it is if their neighbor is illegally funneling money away from the company they work at. The target audience of this report is individuals considering a move to Seattle or other metropolitan areas. It is important for people to know how the median income of the area they move to will correlate to crime rate when considering where to live. 
+
+There are three possible cases for the data. Either our hypothesis is correct and median income of a zip code does play a role in crime rate (negative correlation), there is no correlation found between median income and crime rate, or there is a positive correlation between median income and crime rate, meaning that higher income areas are more frequented by criminal activity.
+
+## Methods
+In our investigation attempting to understand the correlation between crime rate and median household income in Seattle, we focused on specific crime types that were frequent and prominent in all geographical areas. The selected variables included robbery, larceny-theft, and motor vehicle theft. We excluded embezzlement and fraud offenses to concentrate on crimes directly impacting neighborhood safety. The choice of these variables aligns with our objective to assess the relationship between crime offenses and income that pose a direct threat to current and incoming residents in efforts to perhaps bring more awareness to the socioeconomic gap we face and provide more resources to areas that face higher crime rates.
+
+Our sample comprises Seattle Police Department (SPD) data from 2008 to 2020 that also consists of data that illustrates median income data by zip code. These two datasets were specifically picked out for this investigation to evaluate whether certain geographical areas have a higher property crime rate. The decision to include the SPD data allows us to obtain long-term trends and patterns. By narrowing down the dataset to specific crime types, our goal was to provide a focused analysis of crimes applicable to neighborhood safety issues.
+
+To accurately visualize the relationship between income and crime, we reformatted our data and integrated the crime dataset with the household income dataset into one csv file. This approach allowed us to create comprehensive visualizations and conduct geospatial analysis, contributing to the understanding of the dynamics between income levels and crime in different areas of Seattle. In order to create different plots to display the data there were values that needed to be removed during the data process to ensure the results were clean and accurate. This involved originally taking the median household income zip code data and filtering out the zip codes that were outside of the SPD jurisdiction. This process was to not only join our two datasets together but then when graphing the results there would not be any outliers.
+
+The use of column charts and scatter plots played an important role in the statistical methods used for analyzing the correlation between crime rate and median household income. These visualizations serve as empirical tools to gain insights into the distribution, trends, and possible relationships within the data.  We utilized R for its statistical abilities, allowing us to create various plots. The alternative hypothesis we tested predicted that there would be some visibility of a negative trend, inferring that zip codes with less crime rate also have a higher household median income. Our decision to include a bar chart of the number of criminal offenses at each zip code as well as the median household income at each zip code was to illustrate the comparison of the two in each geographical area. Bar charts allow a side-by-side comparison to interpret whether there is a correlation and if so what type. The scatter plot that was created to depict the comparison of instances of crime vs. median income allowed the audience to see each data point that represented a unique zip code, with its position that was determined by both the median household income and the crime rate that went along with it.
+
+Our operational choices aimed to provide a thorough analysis of the correlation between median income and crime rate in Seattle. By choosing to test the correlation with specific variables, there was a goal to generate more meaningful patterns that would contribute valuable insights for current residents in Seattle or other metropolitan areas or individuals looking to move here.  It is important to note that we are aware there are many other factors that contribute to the crime that occurs in Seattle, which will also be conveyed to the audience. The three possible outcomes – a negative, no, or positive correlation – will allow us to conclude and ultimately provide recommendations, offering more knowledge of the complex topic of ongoing safety issues in Seattle.
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+```{r}
+#Reading the data tables and formatting them conveniently
+
+library(tidyverse)
+library(viridis)
+
+zipIncome <- read_delim("../Info 201 final/Seattle_zipcode_income.csv",show_col_types = FALSE) %>% 
+  filter(!is.na(sector))
+
+zipIncome <- zipIncome %>%
+  rename(Zipcode = zipcode)
+
+zipIncome <- zipIncome %>%
+  rename(Sector = sector)
+
+zipIncome <- zipIncome %>%
+  mutate(Sector = toupper(Sector))
+
+zipIncome <- zipIncome %>%
+  mutate(Median.income = as.numeric(str_remove_all(median.income, "[\\$,]")))
+
+zipIncome <- subset(zipIncome, select = -c(median.income))
+
+spdCrimeRate <- read_delim("../Info 201 final/SPD_Crime_Data__2008-Present.csv",show_col_types = FALSE)
+
+names(spdCrimeRate)<-str_replace_all(names(spdCrimeRate), c(" " = "." , "," = "" ))
+```
+
+```{r}
+#Specifying the types of crime we want to cover (all)
+
+spdCrimeRate <- spdCrimeRate %>% 
+  filter(Offense.Parent.Group==c("ROBBERY","LARCENY-THEFT","MOTOR VEHICLE THEFT")) %>% 
+  select(Offense.Parent.Group,Sector,Offense.Code)
+```
+
+```{r}
+#Joining the two frames by sector (wil be used in the final chart)
+
+fullData <- right_join(spdCrimeRate,zipIncome, by = "Sector") %>% 
+  select(!Offense.Code)
+```
+
+```{r}
+#Creating a data frame of frequency of crimes for each zip code, and including median income (will be used in the final chart)
+
+crimeFreq <- as.data.frame(table(fullData[["Zipcode"]]))
+
+colnames(crimeFreq) <- c("Zipcode", "Criminal.instances")
+
+crimeFreq$Zipcode <- as.numeric(as.character(crimeFreq$Zipcode))
+
+fullCrimeFreq <- full_join(crimeFreq,zipIncome,by="Zipcode") %>% 
+  select(!Sector)
+```
+
+## Median Income
+
+```{r}
+#Median income of each zip code
+fullData %>% 
+  group_by(Zipcode) %>% 
+  summarize(Income=mean(Median.income)) %>% 
+  ggplot(aes(factor(Zipcode),Income,fill=Income))+
+  geom_col()+
+        labs(
+    x= "Zip Code",
+    title= "Median Income in Each Zip Code"
+)+
+  theme(axis.text.x = element_text(angle = -45, vjust = .5, hjust=0))
+```
+It is noticeable that the zip code 98164 has much higher median income than other zip codes. This is not error, this zip code is very small and in a rich area. The deviation between the other zip codes is less.
+
+## ROBBERY
+
+```{r}
+#Specifying the types of crime we want to cover (robbery)
+
+robberyRate <- spdCrimeRate %>% 
+  filter(Offense.Parent.Group==c("ROBBERY")) %>% 
+  select(Offense.Parent.Group,Sector)
+```
+
+```{r}
+#Joining the robbery data frame
+
+fullDataRobbery <- right_join(robberyRate,zipIncome, by = "Sector")
+```
+
+```{r}
+#Creating a data frame of frequency of robbery for each zip code, and including median income
+
+robberyFreq <- as.data.frame(table(fullDataRobbery[["Zipcode"]]))
+
+colnames(robberyFreq) <- c("Zipcode", "Robbery.instances")
+
+robberyFreq$Zipcode <- as.numeric(as.character(robberyFreq$Zipcode))
+
+fullFreqRobbery <- full_join(robberyFreq,zipIncome,by="Zipcode") %>% 
+  select(!Sector)
+```
+
+```{r}
+fullFreqRobbery %>% 
+  ggplot(aes(factor(Zipcode),Robbery.instances,fill=Robbery.instances))+
+  geom_col()+
+  scale_fill_viridis(option="inferno",direction=-1)+
+      labs(
+    x= "Zip Code",
+    y="Instances of Robbery",
+    title= "Instances of Robbery in Each Zip Code",
+    fill="Frequency of \n Robbery"
+  )+
+  theme(axis.text.x = element_text(angle = -45, vjust = .5, hjust=0))
+
+fullFreqRobbery %>% 
+  ggplot(aes(Median.income,Robbery.instances,col=Robbery.instances))+
+  geom_point()+
+  geom_smooth(method="lm",se=FALSE,col="azure4")+
+  scale_color_viridis(option="inferno",direction=-1)+
+  labs(
+    x="Median Income",
+    y="Instances of Robbery",
+    title="Instances of Robbery Compared to Median Income"
+  )+
+    guides(col="none")+
+    geom_point(size=2)
+```
+As is the case in the combined crimes data, there seems to be a weak positive correlation between median income and instances of robbery. When run excluding the 98164 zip code
+
+## LARCENY-THEFT
+
+```{r}
+#Specifying the types of crime we want to cover (larceny)
+
+larcenyRate <- spdCrimeRate %>% 
+  filter(Offense.Parent.Group==c("LARCENY-THEFT")) %>% 
+  select(Offense.Parent.Group,Sector)
+```
+
+```{r}
+#Joining the larceny data frame
+
+fullDataLarceny <- right_join(larcenyRate,zipIncome, by = "Sector")
+```
+
+```{r}
+#Creating a data frame of frequency of larceny for each zip code, and including median income
+
+larcenyFreq <- as.data.frame(table(fullDataLarceny[["Zipcode"]]))
+
+colnames(larcenyFreq) <- c("Zipcode", "Larceny.instances")
+
+larcenyFreq$Zipcode <- as.numeric(as.character(larcenyFreq$Zipcode))
+
+fullFreqLarceny <- full_join(larcenyFreq,zipIncome,by="Zipcode") %>% 
+  select(!Sector)
+```
+
+```{r}
+fullFreqLarceny %>% 
+  ggplot(aes(factor(Zipcode),Larceny.instances,fill=Larceny.instances))+
+  geom_col()+
+  scale_fill_viridis(option="inferno",direction=-1)+
+      labs(
+    x= "Zip Code",
+    y="Instances of Larceny",
+    title= "Instances of Larceny in Each Zip Code",
+    fill="Frequency of \n Larceny"
+  )+
+  theme(axis.text.x = element_text(angle = -45, vjust = .5, hjust=0))
+
+fullFreqLarceny %>% 
+  ggplot(aes(Median.income,Larceny.instances,col=Larceny.instances))+
+  geom_point()+
+  geom_smooth(method="lm",se=FALSE,col="azure4")+
+  scale_color_viridis(option="inferno",direction=-1)+
+  labs(
+    x="Median Income",
+    y="Instances of Larceny",
+    title="Instances of Larceny Compared to Median Income"
+  )+
+    guides(col="none")+
+    geom_point(size=2)
+```
+
+
+## MOTOR VEHICLE THEFT
+
+
+```{r}
+#Specifying the types of crime we want to cover (vehicle theft)
+
+vtheftRate <- spdCrimeRate %>% 
+  filter(Offense.Code==c("240")) %>% 
+  select(Offense.Parent.Group,Sector)
+```
+
+```{r}
+#Joining the motor vehicle theft data frame
+
+fullDataVtheft <- right_join(vtheftRate,zipIncome, by = "Sector")
+```
+
+```{r}
+#Creating a data frame of frequency of motor theft for each zip code, and including median income
+
+vtheftFreq <- as.data.frame(table(fullDataVtheft[["Zipcode"]]))
+
+colnames(vtheftFreq) <- c("Zipcode", "Vtheft.instances")
+
+vtheftFreq$Zipcode <- as.numeric(as.character(vtheftFreq$Zipcode))
+
+fullFreqVtheft <- full_join(vtheftFreq,zipIncome,by="Zipcode") %>% 
+  select(!Sector)
+```
+
+```{r}
+fullFreqVtheft %>% 
+  ggplot(aes(factor(Zipcode),Vtheft.instances,fill=Vtheft.instances))+
+  geom_col()+
+  scale_fill_viridis(option="inferno",direction=-1)+
+      labs(
+    x= "Zip Code",
+    y="Instances of Vehicular Theft",
+    title= "Instances of Vehicular Theft in Each Zip Code",
+    fill="Frequency of \n Vehicular Theft"
+  )+
+  theme(axis.text.x = element_text(angle = -45, vjust = .5, hjust=0))
+
+
+fullFreqVtheft %>% 
+  ggplot(aes(Median.income,Vtheft.instances,col=Vtheft.instances))+
+  geom_point()+
+  geom_smooth(method="lm",se=FALSE,col="azure4")+
+  scale_color_viridis(option="inferno",direction=-1)+
+  labs(
+    x="Median Income",
+    y="Instances of Vehicular Theft",
+    title="Instances of Vehicular Theft Compared to Median Income"
+  )+
+    guides(col="none")+
+    geom_point(size=2)
+```
+
+
+## COMBINED DATA
+
+
+```{r}
+#Charts
+
+#Counting crime instances at each zip code
+fullCrimeFreq %>% 
+  ggplot(aes(factor(Zipcode),Criminal.instances,fill=Criminal.instances))+
+  geom_col()+
+  scale_fill_viridis(option="inferno",direction=-1)+
+      labs(
+    x= "Zip Code",
+    y="Instances of Overall Criminal Activity",
+    title= "Instances of Overall Criminal Activity in Each Zip Code",
+    fill="Frequency of \n Criminal Activity"
+  )+
+  theme(axis.text.x = element_text(angle = -45, vjust = .5, hjust=0))
+
+fullCrimeFreq %>% 
+  ggplot(aes(Median.income,Criminal.instances,col=Criminal.instances))+
+  geom_point()+
+  geom_smooth(method="lm",se=FALSE,col="azure4")+
+  scale_color_viridis(option="inferno",direction=-1)+
+  labs(
+    x="Median Income",
+    y="Instances of Overall Criminal Activity",
+    title="Instances of Overall Criminal Activity Compared to Median Income"
+  )+
+    guides(col="none")+
+    geom_point(size=2)
+```
+
+
+## Discussion
+ 
+The results of our statistical analysis provide insights to understand better the relationship between various property crimes and household median income, specifically focusing on motor vehicle theft, larceny-theft, and robbery, in several zip codes across Seattle. Our initial research questions aimed to investigate whether there is a correlation between the median income and each property crime on its own as well as all of the property crimes as a whole in Seattle. Our hypotheses, with the null hypothesis implying no correlation and the alternative hypothesis suggesting a negative correlation, allowed us to interpret our findings to gauge the direct importance household median income has on crime rate.
+
+The statistical charts that were implemented from the merged dataset make known that with our findings it is indicative that there is not a clear correlation between median household income and the selected property crimes. The bar charts depicting each property crime at each zip code and the scatter plot demonstrating property crime compared to median household income by zip code do not indicate a discernible pattern or trend as stated in our alternative hypothesis. This challenges the assumption that wealthier neighborhoods would innately experience lower rates of property crimes. Our findings indicate no significant correlation between the median income and the rate of crime. There is a weak positive correlation between income and criminal activity, income and larceny, and income and robbery, and there is (interestingly) a negative correlation between vehicular theft. Although this study provided results that were still noteworthy regarding what property crime was significant in specific areas, it does not allow us to accurately conclude whether median income plays a direct role in crime rate. Contrary to our alternative hypothesis, the lack of any distinct correlation would imply that there are various other factors that perhaps play a significant role in crime rates in Seattle. Thus, we cannot reject our null hypothesis and conclude that purely looking at household median income cannot be enough to provide accurate insight to Seattle residents on the safety of their neighborhoods.
+
+It is crucial to acknowledge the limitations of our study. This project was narrowed down to three specific property crimes to exclusively focus on understanding how one of the frequent areas of crime affects geographical areas in Seattle. These decisions did not represent the entire range of criminal activities and in turn not using all criminal activity in Seattle could have altered the correlation between crime and income. Additionally, the SPD dataset is limited to reported crimes, and it has become more evident in law enforcement that there is a lot of underreporting that can occur causing the practices of law enforcement to change or make results biased. It is important to note that this study is specifically focusing on the city of Seattle and the interpretation of the findings may not apply to other cities’ crime rates and median income.
+
+To continue to explore crime in Seattle and better our understanding, there are many avenues that can be explored to gain more insight as to what factors are directly affecting the safety of citizens. For instance, additional factors that might influence crime in a city, are population data in neighborhoods in Seattle. Another topic for future analysis could involve gentrification and understanding whether changes in Seattle neighborhood demographics play a role in the types of crime we see as well as the rate. Further research that is done on this topic should support a more nuanced methodology, contemplating complex aspects that play a role in the changing aspects of criminal activities. Our analysis aimed to provide a  foundation for future studies into the intricate relationship of socioeconomic factors and crime, to ensure that there can be more analyses that produce more insight into interpreting crime rate and the factors that play a role in the increase in crime in different areas.
+
+
+
