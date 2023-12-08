@@ -365,4 +365,4 @@ It is crucial to acknowledge the limitations of our study. This project was narr
 To continue to explore crime in Seattle and better our understanding, there are many avenues that can be explored to gain more insight as to what factors are directly affecting the safety of citizens. For instance, additional factors that might influence crime in a city, are population data in neighborhoods in Seattle. Another topic for future analysis could involve gentrification and understanding whether changes in Seattle neighborhood demographics play a role in the types of crime we see as well as the rate. Further research that is done on this topic should support a more nuanced methodology, contemplating complex aspects that play a role in the changing aspects of criminal activities. Our analysis aimed to provide a  foundation for future studies into the intricate relationship of socioeconomic factors and crime, to ensure that there can be more analyses that produce more insight into interpreting crime rate and the factors that play a role in the increase in crime in different areas.
 
 
-
+## Summary
