@@ -24,7 +24,13 @@ To run this code, you need to install R. For viewing the result file, which is i
 
 ### Result
 
-The analysis of the data shows that there is no clear pattern linking household income to the crime rate. Our findings indicate no significant correlation between the median income and the rate of crime.
+The analysis of the data shows that there is a positive weak correlation between median income of a zip code and the frequency of crimes in that zip code. This can be seen on the trendline of the following chart.
+
+```{r}
+library(magick)
+img <- image_read("../info 201/Info 201 final/Info-201-final_files/Info 201 final chart.png")
+plot(img)
+```
 
 ### Author
 
