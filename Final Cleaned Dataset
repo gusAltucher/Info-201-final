@@ -1,6 +1,6 @@
 library(tidyverse)
 
-zipIncome <- read_delim("../Info 201 final/Seattle_zipcode_income.csv",show_col_types = FALSE) %>% 
+zipIncome <- read_delim("../Info 201/Info 201 final/Seattle_zipcode_income.csv",show_col_types = FALSE) %>% 
   filter(!is.na(sector))
 
 zipIncome <- zipIncome %>%
@@ -17,7 +17,7 @@ zipIncome <- zipIncome %>%
 
 zipIncome <- subset(zipIncome, select = -c(median.income))
 
-spdCrimeRate <- read_delim("../Info 201 final/SPD_Crime_Data__2008-Present.csv",show_col_types = FALSE)
+spdCrimeRate <- read_delim("../info 201/Info 201 final/SPD_Crime_Data__2008-Present.csv",show_col_types = FALSE)
 
 names(spdCrimeRate)<-str_replace_all(names(spdCrimeRate), c(" " = "." , "," = "" ))
 ```
