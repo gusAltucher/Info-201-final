@@ -1,8 +1,0 @@
----
-title: "Info 201 final"
-output: html_document
-date: "2023-11-30"
----
-
-
-testing 2 
